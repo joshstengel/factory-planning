@@ -31,15 +31,27 @@ class FactorioObject(object):
     def __repr__(self):
         return "<FactorioObject:\"%s\">" % self.name
     
-    def reference_assembly_machine(self):
+    def reference_assembling_machine(self):
+        '''
+        The cheapest Assembling machine that would build this object, running
+        at full capacity.
+        '''
         machine = FactorioMachine(self)
         return machine
     
     def reference_output_per_minute(self):
-        return self.reference_factory().output_per_minute
+        '''
+        The maximum output per minute possible for this object using the 
+        reference_assembling_machine.
+        '''
+        return self.reference_assembling_machine().output_per_minute
 
 
 class FactorioResource(object):
+    '''
+    Not currently used. Maybe won't ever be used. But I had plans. Oh, how I 
+    had plans.
+    '''
     def __init__(self, product, quantity_per_minute):
         self.product = product
         self.quantity_per_minute = quantity_per_minute
@@ -86,55 +98,60 @@ class FactorioMachine(object):
         self.output_per_minute = self.product.quantity_produced * self.cycles_per_minute
         
     def __repr__(self):
+        '''
+        This is probably the wrong way to do this but it is convenient. Shows
+        the important information for this machine: machine_type (i.e. 
+        Assembling machine 1, Assembling machine 2, etc.), the product of the
+        machine, and the efficiency. 
+        '''
         return "<FactorioMachine(Type%i):\"%s\":%2.1f" % (self.machine_type, self.output_name, self.efficiency*100) + "%>"
     
     def ingredients_per_minute(self):
+        '''
+        Returns the total number of each ingredient needed per minute. This is
+        different than the "total raw" values shown in game in that this one is
+        focused on how many Assembling machines would be required. So if an
+        item needs Iron gear wheels, this method would return Iron gear wheels,
+        Iron plates, and Iron ore.
+        '''
         all_ingredients = dict()
         
         def get_child_ingredients(parent_ingredient, parent_quantity):
             if parent_ingredient.is_base:
                 return []
             else:
-                
                 sublist = []
                 for ingredient, quantity in parent_ingredient.ingredients:
                     sublist.extend([(ingredient, quantity*parent_quantity)])
                     sublist.extend(get_child_ingredients(ingredient, quantity*parent_quantity/ingredient.quantity_produced))
                 return sublist
             
-            
-        for res in self.product.ingredients:
-            ingredient, quantity = res
-            num_required = quantity * self.output_per_minute
-            if ingredient in all_ingredients:
-                all_ingredients[ingredient] += num_required
+        all_ingredients = get_child_ingredients(self.product, self.output_per_minute)
+        
+        ingredient_dict = {}
+        for ingredient, quantity in all_ingredients:
+            if ingredient in ingredient_dict:
+                ingredient_dict[ingredient] += quantity
             else:
-                all_ingredients[ingredient] = num_required
-        return all_ingredients
+                ingredient_dict[ingredient] = quantity
+        return ingredient_dict
     
-    def required_machines(self):
-        for ingredient in self.ingredients_per_minute():
-            
-    
-    def required_machines(self):
-        all_machines = dict()
-        for res in self.product.ingredients:
-            ingredient, quantity = res
-            num_required = quantity * self.output_per_minute * self.efficiency * self.crafting_speed
+    def required_assembling_machines(self):
+        '''
+        Returns the number of feeder assembling machines needed to drive this
+        assembling machine at full capacity. This assumes each feeder machine
+        is the cheapest Assembling machine necessary to build the object.
+        '''
+        all_machines = []
+        all_ingredients = self.ingredients_per_minute()
+        for ingredient in all_ingredients:
             if ingredient.is_base:
-                if ingredient in all_machines:
-                    all_machines[ingredient] += num_required
-                else:
-                    all_machines[ingredient] = num_required
-            else:
-                theoretical_output = ingredient.reference_output_per_minute()
-                factories_required = num_required / theoretical_output
-                efficiency = factories_required / ceil(factories_required)
-                if ingredient in all_machines:
-                    all_machines[ingredient] += num_required
-                else:
-                    all_machines[ingredient] = num_required
-                all_machines.extend([FactorioMachine(ingredient, efficiency) for _i in range(int(ceil(factories_required)))])
+                continue
+            quantity = all_ingredients[ingredient]
+            ratio = quantity / ingredient.reference_output_per_minute()
+            factories = ceil(ratio)
+            efficiency = ratio / factories
+            all_machines.append(FactorioMachine(ingredient, efficiency))
         return all_machines
         
         
@@ -153,4 +170,4 @@ def main():
     plastic = FactorioObject("Plastic bar", 2, [(coal, 1), (petroleum, 20)], 1)
     red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
     
-    print(red_science.reference_factory().required_ingredients())
+    print(red_circuit.reference_assembling_machine().required_assembling_machines())
