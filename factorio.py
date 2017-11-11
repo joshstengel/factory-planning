@@ -60,6 +60,33 @@ class FactorioResource(object):
         return "<FactorioResource:\"%s\":%s/minute>" % (self.product.name, self.quantity_per_minute)
 
 
+class FactorioSmeltedResource(object):
+    '''
+    Iron plate, Copper plate, Stone brick, Steel plate
+    '''
+    def __init__(self, name, ingredients, production_time):
+        self.name = name
+        self.ingredients = ingredients
+        self.production_time = production_time
+        
+    def reference_furnace(self):
+        return
+    
+
+class FactorioFurnace(object):
+    def __init__(self, product, efficiency=1, crafting_speed=2):
+        self.product = product
+        self.output_name = product.name
+        self.efficiency = efficiency
+        self.crafting_speed = crafting_speed
+        
+    def __repr__(self):
+        return "<FactorioFurnace:\"%s\":%2.1f" % (self.output_name, self.efficiency*100) + "%>"
+    
+#    def ingredients_per_minute(self):
+        
+
+
 class FactorioMachine(object):
     '''
     Assembling Machine from Factorio.
