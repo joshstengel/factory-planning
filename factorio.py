@@ -64,13 +64,16 @@ class FactorioSmeltedResource(object):
     '''
     Iron plate, Copper plate, Stone brick, Steel plate
     '''
-    def __init__(self, name, ingredients, production_time):
+    def __init__(self, name, ingredient, production_time):
         self.name = name
-        self.ingredients = ingredients
+        self.ingredient = ingredient
         self.production_time = production_time
         
     def reference_furnace(self):
-        return
+        return FactorioFurnace(self)
+    
+    def reference_output_per_minute(self):
+        return self.reference_furnace().output_per_minute
     
 
 class FactorioFurnace(object):
@@ -79,12 +82,16 @@ class FactorioFurnace(object):
         self.output_name = product.name
         self.efficiency = efficiency
         self.crafting_speed = crafting_speed
+        self.production_time = self.product.production_time / (self.efficiency * self.crafting_speed)
+        self.output_per_minute = 60. / self.production_time
         
     def __repr__(self):
-        return "<FactorioFurnace:\"%s\":%2.1f" % (self.output_name, self.efficiency*100) + "%>"
+        return "<FactorioFurnace:\"%s\":%2.1f%%>" % (self.output_name, self.efficiency*100)
     
-#    def ingredients_per_minute(self):
-        
+    def ingredient_per_minute(self):
+        ingredient, quantity = self.product.ingredient
+        rate = self.product.production_time * self.efficiency * self.crafting_speed * quantity
+        return {ingredient: rate}
 
 
 class FactorioMachine(object):
@@ -131,7 +138,7 @@ class FactorioMachine(object):
         Assembling machine 1, Assembling machine 2, etc.), the product of the
         machine, and the efficiency. 
         '''
-        return "<FactorioMachine(Type%i):\"%s\":%2.1f" % (self.machine_type, self.output_name, self.efficiency*100) + "%>"
+        return "<FactorioMachine(Type%i):\"%s\":%2.1f%%>" % (self.machine_type, self.output_name, self.efficiency*100)
     
     def ingredients_per_minute(self):
         '''
