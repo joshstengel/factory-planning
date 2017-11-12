@@ -20,13 +20,13 @@ class FactorioObject(object):
                      the form [(item1, quantity1), (item2, quantity2)]
         production_time: The amount of time it takes to craft the object
     '''
-    def __init__(self, name, quantity_produced, ingredients, production_time):
+    def __init__(self, name, quantity_produced, ingredients, production_time, machine_type=None):
         self.name = name
         self.quantity_produced = quantity_produced
         self.ingredients = ingredients
         self.production_time = production_time
-#        self.is_base = False
-        
+        self.machine_type = machine_type
+
     def __repr__(self):
         return "<FactorioObject:\"%s\">" % self.name
     
@@ -35,7 +35,10 @@ class FactorioObject(object):
         The cheapest Assembling machine that would build this object, running
         at full capacity.
         '''
-        machine = FactorioMachine(self)
+        if self.machine_type:
+            machine = FactorioMachine(self, machine_type=self.machine_type)
+        else:
+            machine = FactorioMachine(self)
         return machine
     
     def reference_output_per_minute(self):
@@ -43,21 +46,19 @@ class FactorioObject(object):
         The maximum output per minute possible for this object using the 
         reference_assembling_machine.
         '''
-        return self.reference_assembling_machine().output_per_minute
+        return self.reference_machine().output_per_minute
 
 
 class FactorioBaseResource(object):
     '''
-    Not currently used. Maybe won't ever be used. But I had plans. Oh, how I 
-    had plans.
+    Holder for mined resources (Iron ore, Copper ore, Stone, Coal, Uranium ore)
+    and liquid resources. 
     '''
     def __init__(self, name):
         self.name = name
         self.quantity_produced = 1.
         self.ingredients = []
-        
-#        self.is_base = True
-        
+            
     def __repr__(self):
         return "<FactorioBaseResource:\"%s\">" % self.name
     
@@ -89,10 +90,22 @@ class FactorioSmeltedResource(object):
         return FactorioFurnace(self)
     
     def reference_output_per_minute(self):
-        return self.reference_furnace().output_per_minute
+        return self.reference_machine().output_per_minute
     
 
 class FactorioFurnace(object):
+    '''
+    Furnace from Factorio.
+    
+    Args:
+        product: The FactorioSmeltedResource the machine creates
+        efficiency: A measure of the throttling for the machine. If the machine
+                    can create 10 objects per minute but only is required to
+                    build 7, then the efficiency would be 0.7
+        crafting_speed: Crafting speed of the furnace. Either 1 or 2. Default
+                        is 2, which assumes that we are past the point of the
+                        stone furnace
+    '''
     def __init__(self, product, efficiency=1, crafting_speed=2):
         self.product = product
         self.output_name = product.name
@@ -201,10 +214,18 @@ class FactorioMachine(object):
             ratio = quantity / ingredient.reference_output_per_minute()
             factories = ceil(ratio)
             efficiency = ratio / factories
-            all_machines.append(FactorioMachine(ingredient, efficiency))
+            if ingredient.machine_type:
+                pack = FactorioMachinePack(FactorioMachine(ingredient, efficiency, ingredient.machine_type), factories)
+            else:
+                pack = FactorioMachinePack(FactorioMachine(ingredient, efficiency), factories)
+            all_machines.append(pack)
         return all_machines
     
     def required_furnaces(self):
+        '''
+        Returns the number of furnaces needed to drive this assembling machine
+        at full capacity.
+        '''
         all_furnaces = []
         all_ingredients = self.ingredients_per_minute()
         for ingredient in all_ingredients:
@@ -214,29 +235,38 @@ class FactorioMachine(object):
             ratio = quantity / ingredient.reference_output_per_minute()
             furnaces = ceil(ratio)
             efficiency = ratio / furnaces
-            all_furnaces.append(FactorioFurnace(ingredient, efficiency))
+            pack = FactorioMachinePack(FactorioFurnace(ingredient, efficiency), furnaces)
+            all_furnaces.append(pack)
+        return all_furnaces
+    
+class FactorioMachinePack(object):
+    '''
+    This is purely a convenient object to have a useful repr that allows me to
+    see how many of each machine I actually need
+    '''
+    def __init__(self, machine, number):
+        self.machine = machine
+        self.number = number
         
-def main():
+    def __repr__(self):
+        return "%i*%s" % (self.number, self.machine.__repr__())
+
+    
+if __name__ == '__main__':
     iron_ore = FactorioBaseResource("Iron ore")
     iron_plate = FactorioSmeltedResource("Iron plate", [(iron_ore, 1)], 3.5)
     gear = FactorioObject("Iron gear wheel", 1, [(iron_plate, 2)], 0.5)
-    print(gear.reference_machine().ingredients_per_minute())
     
-if __name__ == '__main__':
-    main()
+    copper_ore = FactorioBaseResource("Copper ore")
+    copper_plate = FactorioSmeltedResource("Copper plate", [(copper_ore, 1)], 3.5)
+    red_science = FactorioObject("Science pack 1", 1, [(copper_plate, 1), (gear, 1)], 5)
     
-#    iron_ore = FactorioObject("Iron ore", 1, [], 0)
-#    iron_plate = FactorioObject("Iron plate", 1, [(iron_ore, 1)], 3.5)
-#    gear = FactorioObject("Iron gear wheel", 1, [(iron_plate, 2)], 0.5)
-#    copper_ore = FactorioObject("Copper ore", 1, [], 0)
-#    copper_plate = FactorioObject("Copper plate", 1, [(copper_ore, 1)], 3.5)
-#    red_science = FactorioObject("Science pack 1", 1, [(copper_plate, 1), (gear, 1)], 5)
-#    coal = FactorioObject("Coal", 1, [], 0)
-#    petroleum = FactorioObject("Petroleum gas", 1, [], 0)
-#    
-#    copper_cable = FactorioObject("Copper cable", 2, [(copper_plate, 1)], 0.5)
-#    green_circuit = FactorioObject("Electronic circuit", 1, [(copper_cable, 3), (iron_plate, 1)], 0.5)
-#    plastic = FactorioObject("Plastic bar", 2, [(coal, 1), (petroleum, 20)], 1)
-#    red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
-#    
-#    print(red_circuit.reference_assembling_machine().required_assembling_machines())
+    coal = FactorioBaseResource("Coal")
+    petroleum = FactorioBaseResource("Petroleum gas")
+    copper_cable = FactorioObject("Copper cable", 2, [(copper_plate, 1)], 0.5)
+    green_circuit = FactorioObject("Electronic circuit", 1, [(copper_cable, 3), (iron_plate, 1)], 0.5)
+    plastic = FactorioObject("Plastic bar", 2, [(coal, 1), (petroleum, 20)], 1, machine_type=3)
+    red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
+    sulfuric_acid = FactorioBaseResource("Sulfuric acid")
+    blue_circuit = FactorioObject("Processing unit", 1, [(red_circuit, 2), (green_circuit, 20), (sulfuric_acid, 5)], 10)
+    
