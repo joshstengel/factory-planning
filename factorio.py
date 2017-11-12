@@ -26,8 +26,6 @@ class FactorioObject(object):
         self.ingredients = ingredients
         self.production_time = production_time
         
-        self.is_base = not ingredients
-        
     def __repr__(self):
         return "<FactorioObject:\"%s\">" % self.name
     
@@ -47,27 +45,30 @@ class FactorioObject(object):
         return self.reference_assembling_machine().output_per_minute
 
 
-class FactorioResource(object):
+class FactorioBaseResource(object):
     '''
     Not currently used. Maybe won't ever be used. But I had plans. Oh, how I 
     had plans.
     '''
-    def __init__(self, product, quantity_per_minute):
-        self.product = product
-        self.quantity_per_minute = quantity_per_minute
+    def __init__(self, name):
+        self.name = name
         
     def __repr__(self):
-        return "<FactorioResource:\"%s\":%s/minute>" % (self.product.name, self.quantity_per_minute)
+        return "<FactorioBaseResource:\"%s\">" % self.name
 
 
 class FactorioSmeltedResource(object):
     '''
     Iron plate, Copper plate, Stone brick, Steel plate
     '''
-    def __init__(self, name, ingredient, production_time):
+    def __init__(self, name, ingredients, production_time):
         self.name = name
-        self.ingredient = ingredient
+        if len(ingredients) > 1:
+            raise Exception("Should only be a single ingredient")
+        self.ingredients = ingredients
         self.production_time = production_time
+        
+        self.quantity_produced = 1
         
     def reference_furnace(self):
         return FactorioFurnace(self)
@@ -89,7 +90,7 @@ class FactorioFurnace(object):
         return "<FactorioFurnace:\"%s\":%2.1f%%>" % (self.output_name, self.efficiency*100)
     
     def ingredient_per_minute(self):
-        ingredient, quantity = self.product.ingredient
+        ingredient, quantity = self.product.ingredients[0]
         rate = self.product.production_time * self.efficiency * self.crafting_speed * quantity
         return {ingredient: rate}
 
@@ -151,7 +152,7 @@ class FactorioMachine(object):
         all_ingredients = dict()
         
         def get_child_ingredients(parent_ingredient, parent_quantity):
-            if parent_ingredient.is_base:
+            if isinstance(parent_ingredient, FactorioBaseResource):
                 return []
             else:
                 sublist = []
@@ -179,7 +180,7 @@ class FactorioMachine(object):
         all_machines = []
         all_ingredients = self.ingredients_per_minute()
         for ingredient in all_ingredients:
-            if ingredient.is_base:
+            if not isinstance(ingredient, FactorioObject):
                 continue
             quantity = all_ingredients[ingredient]
             ratio = quantity / ingredient.reference_output_per_minute()
@@ -187,21 +188,40 @@ class FactorioMachine(object):
             efficiency = ratio / factories
             all_machines.append(FactorioMachine(ingredient, efficiency))
         return all_machines
-        
+    
+    def required_furnaces(self):
+        all_furnaces = []
+        all_ingredients = self.ingredients_per_minute()
+        for ingredient in all_ingredients:
+            if not isinstance(ingredient, FactorioSmeltedResource):
+                continue
+            quantity = all_ingredients[ingredient]
+            ratio = quantity / ingredient.reference_output_per_minute()
+            furnaces = ceil(ratio)
+            efficiency = ratio / furnaces
+            all_furnaces.append(FactorioFurnace(ingredient, efficiency))
         
 def main():
-    iron_ore = FactorioObject("Iron ore", 1, [], 0)
-    iron_plate = FactorioObject("Iron plate", 1, [(iron_ore, 1)], 3.5)
+    iron_ore = FactorioBaseResource("Iron ore")
+    iron_plate = FactorioSmeltedResource("Iron plate", [(iron_ore, 1)], 3.5)
     gear = FactorioObject("Iron gear wheel", 1, [(iron_plate, 2)], 0.5)
-    copper_ore = FactorioObject("Copper ore", 1, [], 0)
-    copper_plate = FactorioObject("Copper plate", 1, [(copper_ore, 1)], 3.5)
-    red_science = FactorioObject("Science pack 1", 1, [(copper_plate, 1), (gear, 1)], 5)
-    coal = FactorioObject("Coal", 1, [], 0)
-    petroleum = FactorioObject("Petroleum gas", 1, [], 0)
+    print(gear.reference_assembling_machine().ingredients_per_minute())
     
-    copper_cable = FactorioObject("Copper cable", 2, [(copper_plate, 1)], 0.5)
-    green_circuit = FactorioObject("Electronic circuit", 1, [(copper_cable, 3), (iron_plate, 1)], 0.5)
-    plastic = FactorioObject("Plastic bar", 2, [(coal, 1), (petroleum, 20)], 1)
-    red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
+if __name__ == '__main__':
+    main()
     
-    print(red_circuit.reference_assembling_machine().required_assembling_machines())
+#    iron_ore = FactorioObject("Iron ore", 1, [], 0)
+#    iron_plate = FactorioObject("Iron plate", 1, [(iron_ore, 1)], 3.5)
+#    gear = FactorioObject("Iron gear wheel", 1, [(iron_plate, 2)], 0.5)
+#    copper_ore = FactorioObject("Copper ore", 1, [], 0)
+#    copper_plate = FactorioObject("Copper plate", 1, [(copper_ore, 1)], 3.5)
+#    red_science = FactorioObject("Science pack 1", 1, [(copper_plate, 1), (gear, 1)], 5)
+#    coal = FactorioObject("Coal", 1, [], 0)
+#    petroleum = FactorioObject("Petroleum gas", 1, [], 0)
+#    
+#    copper_cable = FactorioObject("Copper cable", 2, [(copper_plate, 1)], 0.5)
+#    green_circuit = FactorioObject("Electronic circuit", 1, [(copper_cable, 3), (iron_plate, 1)], 0.5)
+#    plastic = FactorioObject("Plastic bar", 2, [(coal, 1), (petroleum, 20)], 1)
+#    red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
+#    
+#    print(red_circuit.reference_assembling_machine().required_assembling_machines())
