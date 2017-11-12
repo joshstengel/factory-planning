@@ -25,11 +25,12 @@ class FactorioObject(object):
         self.quantity_produced = quantity_produced
         self.ingredients = ingredients
         self.production_time = production_time
+#        self.is_base = False
         
     def __repr__(self):
         return "<FactorioObject:\"%s\">" % self.name
     
-    def reference_assembling_machine(self):
+    def reference_machine(self):
         '''
         The cheapest Assembling machine that would build this object, running
         at full capacity.
@@ -52,9 +53,19 @@ class FactorioBaseResource(object):
     '''
     def __init__(self, name):
         self.name = name
+        self.quantity_produced = 1.
+        self.ingredients = []
+        
+#        self.is_base = True
         
     def __repr__(self):
         return "<FactorioBaseResource:\"%s\">" % self.name
+    
+    def reference_machine(self):
+        return
+    
+    def reference_output_per_minute(self):
+        return 
 
 
 class FactorioSmeltedResource(object):
@@ -69,8 +80,12 @@ class FactorioSmeltedResource(object):
         self.production_time = production_time
         
         self.quantity_produced = 1
+#        self.is_base = False
         
-    def reference_furnace(self):
+    def __repr__(self):
+        return "<FactorioSmeltedResource:\"%s\">" % self.name
+        
+    def reference_machine(self):
         return FactorioFurnace(self)
     
     def reference_output_per_minute(self):
@@ -152,7 +167,7 @@ class FactorioMachine(object):
         all_ingredients = dict()
         
         def get_child_ingredients(parent_ingredient, parent_quantity):
-            if isinstance(parent_ingredient, FactorioBaseResource):
+            if not parent_ingredient.ingredients:
                 return []
             else:
                 sublist = []
@@ -205,7 +220,7 @@ def main():
     iron_ore = FactorioBaseResource("Iron ore")
     iron_plate = FactorioSmeltedResource("Iron plate", [(iron_ore, 1)], 3.5)
     gear = FactorioObject("Iron gear wheel", 1, [(iron_plate, 2)], 0.5)
-    print(gear.reference_assembling_machine().ingredients_per_minute())
+    print(gear.reference_machine().ingredients_per_minute())
     
 if __name__ == '__main__':
     main()
