@@ -269,4 +269,6 @@ if __name__ == '__main__':
     red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
     sulfuric_acid = FactorioBaseResource("Sulfuric acid")
     blue_circuit = FactorioObject("Processing unit", 1, [(red_circuit, 2), (green_circuit, 20), (sulfuric_acid, 5)], 10)
+    print(blue_circuit.reference_machine().required_assembling_machines())
+    print(blue_circuit.reference_machine().required_furnaces())
     
