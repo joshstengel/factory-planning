@@ -28,7 +28,7 @@ class FactorioObject(object):
         self.machine_type = machine_type
 
     def __repr__(self):
-        return "<FactorioObject:\"%s\">" % self.name
+        return "<FactorioObject:\"{name}\">".format(name=self.name)
     
     def reference_machine(self):
         '''
@@ -60,7 +60,7 @@ class FactorioBaseResource(object):
         self.ingredients = []
             
     def __repr__(self):
-        return "<FactorioBaseResource:\"%s\">" % self.name
+        return "<FactorioBaseResource:\"{name}\">".format(name=self.name)
     
     def reference_machine(self):
         return
@@ -84,7 +84,7 @@ class FactorioSmeltedResource(object):
 #        self.is_base = False
         
     def __repr__(self):
-        return "<FactorioSmeltedResource:\"%s\">" % self.name
+        return "<FactorioSmeltedResource:\"{name}\">".format(name=self.name)
         
     def reference_machine(self):
         return FactorioFurnace(self)
@@ -115,7 +115,8 @@ class FactorioFurnace(object):
         self.output_per_minute = 60. / self.production_time
         
     def __repr__(self):
-        return "<FactorioFurnace:\"%s\":%2.1f%%>" % (self.output_name, self.efficiency*100)
+        return "<FactorioFurnace:\"{out_name}\":{eff_pct:2.1f}%>".format(out_name=self.output_name,
+                                                                         eff_pct=self.efficiency*100)
     
     def ingredient_per_minute(self):
         ingredient, quantity = self.product.ingredients[0]
@@ -167,7 +168,9 @@ class FactorioMachine(object):
         Assembling machine 1, Assembling machine 2, etc.), the product of the
         machine, and the efficiency. 
         '''
-        return "<FactorioMachine(Type%i):\"%s\":%2.1f%%>" % (self.machine_type, self.output_name, self.efficiency*100)
+        return "<FactorioMachine(Type{mtype}):\"{out_name}\":{eff_pct:2.1f}%>".format(mtype=self.machine_type,
+                                                                                      out_name=self.output_name,
+                                                                                      eff_pct=self.efficiency*100)
     
     def ingredients_per_minute(self):
         '''
@@ -249,7 +252,8 @@ class FactorioMachinePack(object):
         self.number = number
         
     def __repr__(self):
-        return "%i*%s" % (self.number, self.machine.__repr__())
+        return "{num}*{machine}".format(num=self.number,
+                                        machine=self.machine.__repr__())
 
     
 if __name__ == '__main__':
