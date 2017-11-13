@@ -71,7 +71,7 @@ class FactorioMachine(object):
                     build 7, then the efficiency would be 0.7
         machine_type: Integer indication of machine type, i.e. Assembling
                       machine 1 (with a crafting speed of 0.5), Assembling 
-                      \machine 2 (with a crafting speed of 0.75), or Assembling
+                      machine 2 (with a crafting speed of 0.75), or Assembling
                       machine 3 (with a crafting speed of 1.25)
     '''
     def __init__(self, product, efficiency=1, machine_type=1):
