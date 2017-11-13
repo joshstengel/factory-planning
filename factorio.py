@@ -29,7 +29,7 @@ class FactorioObject(object):
         self.is_base = not ingredients
         
     def __repr__(self):
-        return "<FactorioObject:\"%s\">" % self.name
+        return "<FactorioObject:\"{name}\">".format(name=self.name)
     
     def reference_assembling_machine(self):
         '''
@@ -57,7 +57,7 @@ class FactorioResource(object):
         self.quantity_per_minute = quantity_per_minute
         
     def __repr__(self):
-        return "<FactorioResource:\"%s\":%s/minute>" % (self.product.name, self.quantity_per_minute)
+        return "<FactorioResource:\"{name}\":{qpm}/minute>".format(name=self.product.name, qpm=self.quantity_per_minute)
 
 
 class FactorioMachine(object):
@@ -71,7 +71,7 @@ class FactorioMachine(object):
                     build 7, then the efficiency would be 0.7
         machine_type: Integer indication of machine type, i.e. Assembling
                       machine 1 (with a crafting speed of 0.5), Assembling 
-                      machine 2 (with a crafting speed of 0.75), or Assembling
+                      \machine 2 (with a crafting speed of 0.75), or Assembling
                       machine 3 (with a crafting speed of 1.25)
     '''
     def __init__(self, product, efficiency=1, machine_type=1):
@@ -104,7 +104,9 @@ class FactorioMachine(object):
         Assembling machine 1, Assembling machine 2, etc.), the product of the
         machine, and the efficiency. 
         '''
-        return "<FactorioMachine(Type%i):\"%s\":%2.1f" % (self.machine_type, self.output_name, self.efficiency*100) + "%>"
+        return "<FactorioMachine(Type{mtype}):\"{out_name}\":{eff_pct:0.2f}%>".format(mtype=self.machine_type, 
+                                                                                      out_name=self.output_name,
+                                                                                      eff_pct=self.efficiency*100)
     
     def ingredients_per_minute(self):
         '''
