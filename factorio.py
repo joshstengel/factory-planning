@@ -205,43 +205,21 @@ class FactorioMachine(object):
     def required_assembling_machines(self):
         '''
         Returns the number of feeder assembling machines needed to drive this
-        assembling machine at full capacity. This assumes each feeder machine
+        assembling machine at given capacity. This assumes each feeder machine
         is the cheapest Assembling machine necessary to build the object.
         '''
-        all_machines = []
         all_ingredients = self.ingredients_per_minute()
-        for ingredient in all_ingredients:
-            if not isinstance(ingredient, FactorioObject):
-                continue
-            quantity = all_ingredients[ingredient]
-            ratio = quantity / ingredient.reference_output_per_minute()
-            factories = ceil(ratio)
-            efficiency = ratio / factories
-            if ingredient.machine_type:
-                pack = FactorioMachinePack(FactorioMachine(ingredient, efficiency, ingredient.machine_type), factories)
-            else:
-                pack = FactorioMachinePack(FactorioMachine(ingredient, efficiency), factories)
-            all_machines.append(pack)
-        return all_machines
+        return required_assembling_machines(all_ingredients)
     
     def required_furnaces(self):
         '''
         Returns the number of furnaces needed to drive this assembling machine
-        at full capacity.
+        at given capacity.
         '''
-        all_furnaces = []
         all_ingredients = self.ingredients_per_minute()
-        for ingredient in all_ingredients:
-            if not isinstance(ingredient, FactorioSmeltedResource):
-                continue
-            quantity = all_ingredients[ingredient]
-            ratio = quantity / ingredient.reference_output_per_minute()
-            furnaces = ceil(ratio)
-            efficiency = ratio / furnaces
-            pack = FactorioMachinePack(FactorioFurnace(ingredient, efficiency), furnaces)
-            all_furnaces.append(pack)
-        return all_furnaces
-    
+        return required_furnaces(all_ingredients)
+
+
 class FactorioMachinePack(object):
     '''
     This is purely a convenient object to have a useful repr that allows me to
@@ -254,6 +232,60 @@ class FactorioMachinePack(object):
     def __repr__(self):
         return "{num}*{machine}".format(num=self.number,
                                         machine=self.machine.__repr__())
+        
+    def ingredients_per_minute(self):
+        ref = self.machine.ingredients_per_minute
+        total = {}
+        for ingredient in ref:
+            total[ingredient] = self.number * ref[ingredient]
+        return total
+    
+    def required_assembling_machines(self):
+        '''
+        Returns the number of feeder assembling machines needed to drive the
+        machines in this pack at their specified capacities
+        '''
+        all_ingredients = self.ingredients_per_minute()
+        return required_assembling_machines(all_ingredients)
+    
+    def required_furnaces(self):
+        '''
+        Returns the number of furnaces needed to drive the machines in this
+        pack at their specified capacities
+        '''
+        all_ingredients = self.ingredients_per_minute()
+        return required_furnaces(all_ingredients)
+
+
+def required_assembling_machines(all_ingredients):
+    all_machines = []
+    for ingredient in all_ingredients:
+        if not isinstance(ingredient, FactorioObject):
+            continue
+        quantity = all_ingredients[ingredient]
+        ratio = quantity / ingredient.reference_output_per_minute()
+        factories = ceil(ratio)
+        efficiency = ratio / factories
+        if ingredient.machine_type:
+            pack = FactorioMachinePack(FactorioMachine(ingredient, efficiency, ingredient.machine_type), factories)
+        else:
+            pack = FactorioMachinePack(FactorioMachine(ingredient, efficiency), factories)
+        all_machines.append(pack)
+    return all_machines
+
+
+def required_furnaces(all_ingredients):
+    all_furnaces = []
+    for ingredient in all_ingredients:
+        if not isinstance(ingredient, FactorioSmeltedResource):
+            continue
+        quantity = all_ingredients[ingredient]
+        ratio = quantity / ingredient.reference_output_per_minute()
+        furnaces = ceil(ratio)
+        efficiency = ratio / furnaces
+        pack = FactorioMachinePack(FactorioFurnace(ingredient, efficiency), furnaces)
+        all_furnaces.append(pack)
+    return all_furnaces
 
     
 if __name__ == '__main__':
