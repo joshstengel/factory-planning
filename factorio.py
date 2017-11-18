@@ -234,7 +234,7 @@ class FactorioMachinePack(object):
                                         machine=self.machine.__repr__())
         
     def ingredients_per_minute(self):
-        ref = self.machine.ingredients_per_minute
+        ref = self.machine.ingredients_per_minute()
         total = {}
         for ingredient in ref:
             total[ingredient] = self.number * ref[ingredient]
