@@ -74,8 +74,9 @@ class FactorioBaseResourceRequirement(object):
         self.resource = resource
         self.quantity_per_minute = quantity_per_minute
     
-#    def __repr__(self):
-#        return "
+    def __repr__(self):
+        return "{oldrepr}@{num}/minute".format(oldrepr=self.resource.__repr__(),
+                                               num=self.quantity_per_minute)
 
 
 class FactorioSmeltedResource(object):
@@ -267,13 +268,34 @@ class FactorioMachinePack(object):
     
     def required_base_resources(self):
         all_ingredients = self.machine.ingredients_per_minute()
+        base_requirements = []
         for ingredient in all_ingredients:
             if isinstance(ingredient, FactorioBaseResource):
-                bases
+                base_requirements.append(FactorioBaseResourceRequirement(ingredient, all_ingredients[ingredient]))
+        return base_requirements
     
     def requirements(self):
         machines = self.required_assembling_machines()
         furnaces = self.required_furnaces()
+        base_requirements = self.required_base_resources()
+        base_string = ""
+        for base_requirement in base_requirements:
+            base_string += "\n\t{baserepr}".format(baserepr=base_requirement.__repr__())
+        furnace_string = ""
+        for furnace in furnaces:
+            furnace_string += "\n\t{furnacerepr}".format(furnacerepr=furnace.__repr__())
+        machine_string = ""
+        for machine in machines:
+            machine_string += "\n\t{machinerepr}".format(machinerepr=machine.__repr__())
+        requirements_string = """
+REQUIREMENTS FOR {pack}:
+    Base Resources Needed:{base}
+    Furnaces Needed:{furnace}
+    Machines Needed:{machine}""".format(pack=self.__repr__(),
+                                        base=base_string,
+                                        furnace=furnace_string,
+                                        machine=machine_string)
+        return requirements_string
 
 
 def required_assembling_machines(all_ingredients):
@@ -308,22 +330,23 @@ def required_furnaces(all_ingredients):
 
     
 if __name__ == '__main__':
-    iron_ore = FactorioBaseResource("Iron ore")
-    iron_plate = FactorioSmeltedResource("Iron plate", [(iron_ore, 1)], 3.5)
-    gear = FactorioObject("Iron gear wheel", 1, [(iron_plate, 2)], 0.5)
+#    iron_ore = FactorioBaseResource("Iron ore")
+#    iron_plate = FactorioSmeltedResource("Iron plate", [(iron_ore, 1)], 3.5)
+#    gear = FactorioObject("Iron gear wheel", 1, [(iron_plate, 2)], 0.5)
+#    
+#    copper_ore = FactorioBaseResource("Copper ore")
+#    copper_plate = FactorioSmeltedResource("Copper plate", [(copper_ore, 1)], 3.5)
+#    red_science = FactorioObject("Science pack 1", 1, [(copper_plate, 1), (gear, 1)], 5)
+#    
+#    coal = FactorioBaseResource("Coal")
+#    petroleum = FactorioBaseResource("Petroleum gas")
+#    copper_cable = FactorioObject("Copper cable", 2, [(copper_plate, 1)], 0.5)
+#    green_circuit = FactorioObject("Electronic circuit", 1, [(copper_cable, 3), (iron_plate, 1)], 0.5)
+#    plastic = FactorioObject("Plastic bar", 2, [(coal, 1), (petroleum, 20)], 1, machine_type=3)
+#    red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
+#    sulfuric_acid = FactorioBaseResource("Sulfuric acid")
+#    blue_circuit = FactorioObject("Processing unit", 1, [(red_circuit, 2), (green_circuit, 20), (sulfuric_acid, 5)], 10)
+    from items import *
     
-    copper_ore = FactorioBaseResource("Copper ore")
-    copper_plate = FactorioSmeltedResource("Copper plate", [(copper_ore, 1)], 3.5)
-    red_science = FactorioObject("Science pack 1", 1, [(copper_plate, 1), (gear, 1)], 5)
-    
-    coal = FactorioBaseResource("Coal")
-    petroleum = FactorioBaseResource("Petroleum gas")
-    copper_cable = FactorioObject("Copper cable", 2, [(copper_plate, 1)], 0.5)
-    green_circuit = FactorioObject("Electronic circuit", 1, [(copper_cable, 3), (iron_plate, 1)], 0.5)
-    plastic = FactorioObject("Plastic bar", 2, [(coal, 1), (petroleum, 20)], 1, machine_type=3)
-    red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
-    sulfuric_acid = FactorioBaseResource("Sulfuric acid")
-    blue_circuit = FactorioObject("Processing unit", 1, [(red_circuit, 2), (green_circuit, 20), (sulfuric_acid, 5)], 10)
-    print(blue_circuit.reference_machine().required_assembling_machines())
-    print(blue_circuit.reference_machine().required_furnaces())
-    
+    threeblues = FactorioMachinePack(blue_circuit.reference_machine(), 3)
+    print(threeblues.requirements())
