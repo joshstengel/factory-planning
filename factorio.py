@@ -66,7 +66,16 @@ class FactorioBaseResource(object):
         return
     
     def reference_output_per_minute(self):
-        return 
+        return
+    
+
+class FactorioBaseResourceRequirement(object):
+    def __init__(self, resource, quantity_per_minute):
+        self.resource = resource
+        self.quantity_per_minute = quantity_per_minute
+    
+#    def __repr__(self):
+#        return "
 
 
 class FactorioSmeltedResource(object):
@@ -255,6 +264,16 @@ class FactorioMachinePack(object):
         '''
         all_ingredients = self.ingredients_per_minute()
         return required_furnaces(all_ingredients)
+    
+    def required_base_resources(self):
+        all_ingredients = self.machine.ingredients_per_minute()
+        for ingredient in all_ingredients:
+            if isinstance(ingredient, FactorioBaseResource):
+                bases
+    
+    def requirements(self):
+        machines = self.required_assembling_machines()
+        furnaces = self.required_furnaces()
 
 
 def required_assembling_machines(all_ingredients):
