@@ -22,3 +22,13 @@ PLASTIC = FactorioObject("Plastic bar", 2, [(COAL, 1), (PETROLEUM, 20)], 1, mach
 RED_CIRCUIT = FactorioObject("Advanced circuit", 1, [(COPPER_CABLE, 4), (GREEN_CIRCUIT, 2), (PLASTIC, 2)], 6)
 SULFURIC_ACID = FactorioBaseResource("Sulfuric acid")
 BLUE_CIRCUIT = FactorioObject("Processing unit", 1, [(RED_CIRCUIT, 2), (GREEN_CIRCUIT, 20), (SULFURIC_ACID, 5)], 10)
+
+BATTERY = FactorioObject("Battery", 1, [(COPPER_PLATE, 1), (IRON_PLATE, 1), (SULFURIC_ACID, 20)], 5)
+SPEED_MODULE_1 = FactorioObject("Speed module", 1, [(RED_CIRCUIT, 5), (GREEN_CIRCUIT, 5)], 15)
+YELLOW_SCIENCE = FactorioObject("High tech science pack", 
+                                2, 
+                                [(BATTERY, 1), 
+                                 (COPPER_CABLE, 30), 
+                                 (BLUE_CIRCUIT, 3), 
+                                 (SPEED_MODULE_1, 1)], 
+                                14)

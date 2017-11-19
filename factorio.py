@@ -228,6 +228,39 @@ class FactorioMachine(object):
         '''
         all_ingredients = self.ingredients_per_minute()
         return required_furnaces(all_ingredients)
+    
+    def required_base_resources(self):
+        all_ingredients = self.ingredients_per_minute()
+        base_requirements = []
+        for ingredient in all_ingredients:
+            if isinstance(ingredient, FactorioBaseResource):
+                base_requirements.append(FactorioBaseResourceRequirement(ingredient, all_ingredients[ingredient]))
+        return base_requirements
+    
+    def report(self):
+        machines = self.required_assembling_machines()
+        furnaces = self.required_furnaces()
+        base_requirements = self.required_base_resources()
+        base_string = ""
+        for base_requirement in base_requirements:
+            base_string += "\n\t{baserepr}".format(baserepr=base_requirement.__repr__())
+        furnace_string = ""
+        for furnace in furnaces:
+            furnace_string += "\n\t{furnacerepr}".format(furnacerepr=furnace.__repr__())
+        machine_string = ""
+        for machine in machines:
+            machine_string += "\n\t{machinerepr}".format(machinerepr=machine.__repr__())
+        requirements_string = """
+REQUIREMENTS FOR {pack}:
+    Base Resources Needed:{base}
+    Furnaces Needed:{furnace}
+    Machines Needed:{machine}
+MAX THEORETICAL OUTPUT PER MINUTE: {output}""".format(pack=self.__repr__(),
+                                                      base=base_string,
+                                                      furnace=furnace_string,
+                                                      machine=machine_string,
+                                                      output=self.output_per_minute)
+        return requirements_string
 
 
 class FactorioMachinePack(object):
@@ -270,7 +303,7 @@ class FactorioMachinePack(object):
         return required_furnaces(all_ingredients)
     
     def required_base_resources(self):
-        all_ingredients = self.machine.ingredients_per_minute()
+        all_ingredients = self.ingredients_per_minute()
         base_requirements = []
         for ingredient in all_ingredients:
             if isinstance(ingredient, FactorioBaseResource):
@@ -343,3 +376,6 @@ if __name__ == '__main__':
     fast_blue = FactorioMachine(BLUE_CIRCUIT, 1, 3)
     three_fast_blues = FactorioMachinePack(fast_blue, 3)
     print(three_fast_blues.report())
+    
+    two_science = FactorioMachinePack(YELLOW_SCIENCE.reference_machine(), 2)
+    print(two_science.report())
