@@ -152,9 +152,9 @@ class FactorioMachine(object):
         self.output_name = product.name
         self.product = product
         if len(self.product.ingredients) > 4:
-            machine_type = 3
+            machine_type = max(3, machine_type)
         elif len(self.product.ingredients) > 2:
-            machine_type = 2
+            machine_type = max(2, machine_type)
         
         if machine_type == 1:
             self.crafting_speed = 0.5
@@ -242,6 +242,9 @@ class FactorioMachinePack(object):
     def __repr__(self):
         return "{num}*{machine}".format(num=self.number,
                                         machine=self.machine.__repr__())
+    
+    def output_per_minute(self):
+        return self.number * self.machine.output_per_minute
         
     def ingredients_per_minute(self):
         ref = self.machine.ingredients_per_minute()
@@ -274,7 +277,7 @@ class FactorioMachinePack(object):
                 base_requirements.append(FactorioBaseResourceRequirement(ingredient, all_ingredients[ingredient]))
         return base_requirements
     
-    def requirements(self):
+    def report(self):
         machines = self.required_assembling_machines()
         furnaces = self.required_furnaces()
         base_requirements = self.required_base_resources()
@@ -291,10 +294,12 @@ class FactorioMachinePack(object):
 REQUIREMENTS FOR {pack}:
     Base Resources Needed:{base}
     Furnaces Needed:{furnace}
-    Machines Needed:{machine}""".format(pack=self.__repr__(),
-                                        base=base_string,
-                                        furnace=furnace_string,
-                                        machine=machine_string)
+    Machines Needed:{machine}
+MAX THEORETICAL OUTPUT PER MINUTE: {output}""".format(pack=self.__repr__(),
+                                                      base=base_string,
+                                                      furnace=furnace_string,
+                                                      machine=machine_string,
+                                                      output=self.output_per_minute())
         return requirements_string
 
 
@@ -330,23 +335,11 @@ def required_furnaces(all_ingredients):
 
     
 if __name__ == '__main__':
-#    iron_ore = FactorioBaseResource("Iron ore")
-#    iron_plate = FactorioSmeltedResource("Iron plate", [(iron_ore, 1)], 3.5)
-#    gear = FactorioObject("Iron gear wheel", 1, [(iron_plate, 2)], 0.5)
-#    
-#    copper_ore = FactorioBaseResource("Copper ore")
-#    copper_plate = FactorioSmeltedResource("Copper plate", [(copper_ore, 1)], 3.5)
-#    red_science = FactorioObject("Science pack 1", 1, [(copper_plate, 1), (gear, 1)], 5)
-#    
-#    coal = FactorioBaseResource("Coal")
-#    petroleum = FactorioBaseResource("Petroleum gas")
-#    copper_cable = FactorioObject("Copper cable", 2, [(copper_plate, 1)], 0.5)
-#    green_circuit = FactorioObject("Electronic circuit", 1, [(copper_cable, 3), (iron_plate, 1)], 0.5)
-#    plastic = FactorioObject("Plastic bar", 2, [(coal, 1), (petroleum, 20)], 1, machine_type=3)
-#    red_circuit = FactorioObject("Advanced circuit", 1, [(copper_cable, 4), (green_circuit, 2), (plastic, 2)], 6)
-#    sulfuric_acid = FactorioBaseResource("Sulfuric acid")
-#    blue_circuit = FactorioObject("Processing unit", 1, [(red_circuit, 2), (green_circuit, 20), (sulfuric_acid, 5)], 10)
     from items import *
     
-    threeblues = FactorioMachinePack(blue_circuit.reference_machine(), 3)
-    print(threeblues.requirements())
+    three_blues = FactorioMachinePack(BLUE_CIRCUIT.reference_machine(), 3)
+    print(three_blues.report())
+    
+    fast_blue = FactorioMachine(BLUE_CIRCUIT, 1, 3)
+    three_fast_blues = FactorioMachinePack(fast_blue, 3)
+    print(three_fast_blues.report())
