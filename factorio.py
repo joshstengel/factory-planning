@@ -202,7 +202,7 @@ class FactorioMachine(object):
                     sublist.extend(get_child_ingredients(ingredient, quantity*parent_quantity/ingredient.quantity_produced))
                 return sublist
             
-        all_ingredients = get_child_ingredients(self.product, self.output_per_minute)
+        all_ingredients = get_child_ingredients(self.product, self.cycles_per_minute)
         
         ingredient_dict = {}
         for ingredient, quantity in all_ingredients:
@@ -370,12 +370,22 @@ def required_furnaces(all_ingredients):
 if __name__ == '__main__':
     from items import *
     
-    three_blues = FactorioMachinePack(BLUE_CIRCUIT.reference_machine(), 3)
-    print(three_blues.report())
+    fast_red = FactorioMachine(RED_SCIENCE, machine_type=2)
+    five_reds = FactorioMachinePack(fast_red, 5)
+    print(five_reds.report())
     
-    fast_blue = FactorioMachine(BLUE_CIRCUIT, 1, 3)
-    three_fast_blues = FactorioMachinePack(fast_blue, 3)
-    print(three_fast_blues.report())
+    fast_green = FactorioMachine(GREEN_SCIENCE, machine_type=2)
+    six_greens = FactorioMachinePack(fast_green, 6)
+    print(six_greens.report())
     
-    two_science = FactorioMachinePack(YELLOW_SCIENCE.reference_machine(), 2)
-    print(two_science.report())
+    twelve_blues = FactorioMachinePack(BLUE_SCIENCE.reference_machine(), 12)
+    print(twelve_blues.report())
+    
+    five_grays = FactorioMachinePack(GRAY_SCIENCE.reference_machine(), 5)
+    print(five_grays.report())
+    
+    seven_yellows = FactorioMachinePack(YELLOW_SCIENCE.reference_machine(), 7)
+    print(seven_yellows.report())
+    
+    seven_purples = FactorioMachinePack(PURPLE_SCIENCE.reference_machine(), 7)
+    print(seven_purples.report())
