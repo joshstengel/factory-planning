@@ -148,7 +148,7 @@ class FactorioMachine(object):
                       machine 2 (with a crafting speed of 0.75), or Assembling
                       machine 3 (with a crafting speed of 1.25)
     '''
-    def __init__(self, product, efficiency=1, machine_type=1):
+    def __init__(self, product, efficiency=1, machine_type=1, minimum_feeder=1):
         self.output_name = product.name
         self.product = product
         if len(self.product.ingredients) > 4:
@@ -164,6 +164,8 @@ class FactorioMachine(object):
             self.crafting_speed = 1.25
         else:
             raise Exception("Unknown machine type")
+        
+        self.minimum_feeder = minimum_feeder
             
         self.machine_type = machine_type
         self.efficiency = efficiency
@@ -219,7 +221,7 @@ class FactorioMachine(object):
         is the cheapest Assembling machine necessary to build the object.
         '''
         all_ingredients = self.ingredients_per_minute()
-        return required_assembling_machines(all_ingredients)
+        return required_assembling_machines(all_ingredients, self.minimum_feeder)
     
     def required_furnaces(self):
         '''
@@ -292,7 +294,7 @@ class FactorioMachinePack(object):
         machines in this pack at their specified capacities
         '''
         all_ingredients = self.ingredients_per_minute()
-        return required_assembling_machines(all_ingredients)
+        return required_assembling_machines(all_ingredients, self.machine.minimum_feeder)
     
     def required_furnaces(self):
         '''
@@ -336,19 +338,25 @@ MAX THEORETICAL OUTPUT PER MINUTE: {output}""".format(pack=self.__repr__(),
         return requirements_string
 
 
-def required_assembling_machines(all_ingredients):
+def required_assembling_machines(all_ingredients, minimum_type=1):
     all_machines = []
     for ingredient in all_ingredients:
         if not isinstance(ingredient, FactorioObject):
             continue
         quantity = all_ingredients[ingredient]
-        ratio = quantity / ingredient.reference_output_per_minute()
+        if not ingredient.machine_type:
+            machine_type = minimum_type
+        else:
+            machine_type = max(minimum_type, ingredient.machine_type)
+        ingredient_copy = FactorioObject(name=ingredient.name, 
+                                         quantity_produced=ingredient.quantity_produced, 
+                                         ingredients=ingredient.ingredients, 
+                                         production_time=ingredient.production_time, 
+                                         machine_type=machine_type)
+        ratio = quantity / ingredient_copy.reference_output_per_minute()
         factories = ceil(ratio)
         efficiency = ratio / factories
-        if ingredient.machine_type:
-            pack = FactorioMachinePack(FactorioMachine(ingredient, efficiency, ingredient.machine_type), factories)
-        else:
-            pack = FactorioMachinePack(FactorioMachine(ingredient, efficiency), factories)
+        pack = FactorioMachinePack(FactorioMachine(ingredient_copy, efficiency, ingredient_copy.machine_type), factories)
         all_machines.append(pack)
     return all_machines
 
@@ -374,14 +382,16 @@ if __name__ == '__main__':
     five_reds = FactorioMachinePack(fast_red, 5)
     print(five_reds.report())
     
-    fast_green = FactorioMachine(GREEN_SCIENCE, machine_type=2)
+    fast_green = FactorioMachine(GREEN_SCIENCE, machine_type=2, minimum_feeder=2)
     six_greens = FactorioMachinePack(fast_green, 6)
     print(six_greens.report())
     
-    twelve_blues = FactorioMachinePack(BLUE_SCIENCE.reference_machine(), 12)
+    blue = FactorioMachine(BLUE_SCIENCE, machine_type=2, minimum_feeder=2)
+    twelve_blues = FactorioMachinePack(blue, 12)
     print(twelve_blues.report())
     
-    five_grays = FactorioMachinePack(GRAY_SCIENCE.reference_machine(), 5)
+    gray = FactorioMachine(GRAY_SCIENCE, machine_type=2, minimum_feeder=2)
+    five_grays = FactorioMachinePack(gray, 5)
     print(five_grays.report())
     
     seven_yellows = FactorioMachinePack(YELLOW_SCIENCE.reference_machine(), 7)
